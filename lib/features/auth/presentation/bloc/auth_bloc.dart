@@ -69,7 +69,44 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  // Implementar el resto de los handlers...
+  Future<void> _onSignUpRequested(
+    AuthSignUpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading(message: 'Creando cuenta...'));
+    final result = await signUpUseCase(
+      SignUpParams(
+        email: event.email,
+        password: event.password,
+        fullName: event.fullName,
+      ),
+    );
+    result.fold(
+      (failure) => emit(AuthError(message: failure.message)),
+      (user) => emit(AuthSignUpSuccess(email: user.email)),
+    );
+  }
+
+  Future<void> _onSignOutRequested(
+    AuthSignOutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading(message: 'Cerrando sesión...'));
+    await signOutUseCase(const NoParams());
+    emit(const AuthUnauthenticated());
+  }
+
+  Future<void> _onPasswordResetRequested(
+    AuthPasswordResetRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading(message: 'Enviando correo...'));
+    final result = await sendPasswordResetUseCase(event.email);
+    result.fold(
+      (failure) => emit(AuthError(message: failure.message)),
+      (_) => emit(AuthPasswordResetSent(email: event.email)),
+    );
+  }
 
   @override
   Future<void> close() {
